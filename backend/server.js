@@ -69,7 +69,62 @@ app.delete("/api/todos/:id", async (req, res) => {
 // BUG #4: Missing PUT endpoint for updating todos
 // STUDENT TODO: Implement PUT /api/todos/:id endpoint
 
-const port = process.env.PORT || 8080;
+app.put("/api/todos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, completed } = req.body;
+
+    // Validation: Check if todo exists first
+    const checkResult = await pool.query(
+      "SELECT * FROM todos WHERE id = $1",
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: "Todo not found" });
+    }
+
+    // Build dynamic update query based on what fields are provided
+    let updateQuery = "UPDATE todos SET ";
+    const updateValues = [];
+    let paramCounter = 1;
+
+    if (title !== undefined) {
+      // Validate title if provided
+      if (!title || title.trim() === "") {
+        return res.status(400).json({ 
+          error: "Title cannot be empty" 
+        });
+      }
+      updateValues.push(title.trim());
+      updateQuery += `title = $${paramCounter}, `;
+      paramCounter++;
+    }
+
+    if (completed !== undefined) {
+      updateValues.push(completed);
+      updateQuery += `completed = $${paramCounter}, `;
+      paramCounter++;
+    }
+
+    // If no fields to update
+    if (updateValues.length === 0) {
+      return res.status(400).json({ 
+        error: "No valid fields to update" 
+      });
+    }
+
+    // Remove trailing comma and space, add WHERE clause
+    updateQuery = updateQuery.slice(0, -2);
+    updateQuery += ` WHERE id = $${paramCounter} RETURNING *`;
+    updateValues.push(id);
+
+    const result = await pool.query(updateQuery, updateValues);
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // BUG #5: Server starts even in test mode, causing port conflicts
 // STUDENT FIX: Only start server if NOT in test mode
@@ -81,3 +136,4 @@ if (process.env.NODE_ENV !== "test") {
 
 // BUG #6: App not exported - tests can't import it!
 // STUDENT FIX: Export the app module
+module.exports = app;
