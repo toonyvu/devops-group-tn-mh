@@ -27,8 +27,6 @@ async function initDB() {
   `);
 }
 
-initDB();
-
 const port = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
