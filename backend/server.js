@@ -17,6 +17,23 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS todos (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        completed BOOLEAN DEFAULT false
+      );
+    `);
+    console.log("DB initialized");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+initDB();
+
 const port = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
