@@ -13,9 +13,21 @@ const pool = new Pool({
   user: process.env.DB_USER || "postgres",
   host: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME || "tododb",
-  password: process.env.DB_PASSWORD || "wrongpassword",
+  password: process.env.DB_PASSWORD || "postgres",
   port: process.env.DB_PORT || 5432,
 });
+
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS todos (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      completed BOOLEAN DEFAULT false
+    );
+  `);
+}
+
+const port = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
   res.json({ status: "healthy", version: "1.0.0" });
@@ -40,6 +52,9 @@ app.post("/api/todos", async (req, res) => {
     // STUDENT FIX: Add validation here!
     // Hint: Check if title is empty or undefined
     // Return 400 status with error message if invalid
+    if (!title || title.trim() === "") {
+      return res.status(400).json({ error: "Title is required" });
+    }
 
     const result = await pool.query(
       "INSERT INTO todos(title, completed) VALUES($1, $2) RETURNING *",
@@ -75,10 +90,9 @@ app.put("/api/todos/:id", async (req, res) => {
     const { title, completed } = req.body;
 
     // Validation: Check if todo exists first
-    const checkResult = await pool.query(
-      "SELECT * FROM todos WHERE id = $1",
-      [id]
-    );
+    const checkResult = await pool.query("SELECT * FROM todos WHERE id = $1", [
+      id,
+    ]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: "Todo not found" });
@@ -92,8 +106,8 @@ app.put("/api/todos/:id", async (req, res) => {
     if (title !== undefined) {
       // Validate title if provided
       if (!title || title.trim() === "") {
-        return res.status(400).json({ 
-          error: "Title cannot be empty" 
+        return res.status(400).json({
+          error: "Title cannot be empty",
         });
       }
       updateValues.push(title.trim());
@@ -109,8 +123,8 @@ app.put("/api/todos/:id", async (req, res) => {
 
     // If no fields to update
     if (updateValues.length === 0) {
-      return res.status(400).json({ 
-        error: "No valid fields to update" 
+      return res.status(400).json({
+        error: "No valid fields to update",
       });
     }
 
@@ -128,12 +142,23 @@ app.put("/api/todos/:id", async (req, res) => {
 
 // BUG #5: Server starts even in test mode, causing port conflicts
 // STUDENT FIX: Only start server if NOT in test mode
-if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
-  });
+let ready;
+
+async function init() {
+  await initDB();
+  console.log("DB initialized");
 }
 
-// BUG #6: App not exported - tests can't import it!
-// STUDENT FIX: Export the app module
-module.exports = app;
+if (process.env.NODE_ENV !== "test") {
+  ready = init();
+  ready.then(() => {
+    app.listen(port, () => {
+      console.log(`Backend running on port ${port}`);
+    });
+  });
+} else {
+  // In test mode, ensure DB is initialized before tests run
+  ready = init();
+}
+
+module.exports = { app, ready };
