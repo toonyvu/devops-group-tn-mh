@@ -142,23 +142,23 @@ app.put("/api/todos/:id", async (req, res) => {
 
 // BUG #5: Server starts even in test mode, causing port conflicts
 // STUDENT FIX: Only start server if NOT in test mode
-async function start() {
-  try {
-    await initDB();
-    console.log("DB initialized");
+let ready;
 
-    if (process.env.NODE_ENV !== "test") {
-      app.listen(port, () => {
-        console.log(`Backend running on port ${port}`);
-      });
-    }
-  } catch (err) {
-    console.error(err);
-  }
+async function init() {
+  await initDB();
+  console.log("DB initialized");
 }
 
-start();
+if (process.env.NODE_ENV !== "test") {
+  ready = init();
+  ready.then(() => {
+    app.listen(port, () => {
+      console.log(`Backend running on port ${port}`);
+    });
+  });
+} else {
+  // In test mode, ensure DB is initialized before tests run
+  ready = init();
+}
 
-// BUG #6: App not exported - tests can't import it!
-// STUDENT FIX: Export the app module
-module.exports = app;
+module.exports = { app, ready };
