@@ -18,18 +18,13 @@ const pool = new Pool({
 });
 
 async function initDB() {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS todos (
-        id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        completed BOOLEAN DEFAULT false
-      );
-    `);
-    console.log("DB initialized");
-  } catch (err) {
-    console.error(err);
-  }
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS todos (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      completed BOOLEAN DEFAULT false
+    );
+  `);
 }
 
 initDB();
@@ -149,11 +144,22 @@ app.put("/api/todos/:id", async (req, res) => {
 
 // BUG #5: Server starts even in test mode, causing port conflicts
 // STUDENT FIX: Only start server if NOT in test mode
-if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
-  });
+async function start() {
+  try {
+    await initDB();
+    console.log("DB initialized");
+
+    if (process.env.NODE_ENV !== "test") {
+      app.listen(port, () => {
+        console.log(`Backend running on port ${port}`);
+      });
+    }
+  } catch (err) {
+    console.error(err);
+  }
 }
+
+start();
 
 // BUG #6: App not exported - tests can't import it!
 // STUDENT FIX: Export the app module
