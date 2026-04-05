@@ -153,6 +153,7 @@ if (process.env.NODE_ENV !== "test") {
   ready = init();
   ready.then(() => {
     app.listen(port, () => {
+      console.log("Hello");
       console.log(`Backend running on port ${port}`);
     });
   });
