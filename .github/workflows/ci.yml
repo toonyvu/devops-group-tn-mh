@@ -106,4 +106,4 @@ jobs:
 
             docker-compose pull
 
-            docker-compose up -d
+            docker-compose -p nghia-project up -d --build
