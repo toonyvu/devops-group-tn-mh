@@ -104,6 +104,8 @@ jobs:
 
             git pull origin main
 
+            docker-compose -p nghia-project down
+
             docker-compose pull
 
             docker-compose -p nghia-project up -d --build
