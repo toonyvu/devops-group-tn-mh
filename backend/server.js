@@ -2,11 +2,13 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const helmet = require("helmet");
+const dotenv = require("dotenv");
 
 const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+dotenv.config();
 
 // BUG #1: Wrong default password - doesn't match docker-compose!
 const pool = new Pool({
