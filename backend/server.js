@@ -10,11 +10,16 @@ app.use(express.json());
 
 // BUG #1: Wrong default password - doesn't match docker-compose!
 const pool = new Pool({
-  user: process.env.DB_USER || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "tododb",
-  password: process.env.DB_PASSWORD || "wrongpassword",
+  user: process.env.DB_USER || "myuser",
+  host: process.env.DB_HOST || "db",
+  database: process.env.DB_NAME || "mydatabase",
+  password: process.env.DB_PASSWORD || "mypass",
   port: process.env.DB_PORT || 5432,
+});
+
+// 👉 Fix thêm để pass requirement "app should load"
+app.get("/", (req, res) => {
+  res.send("App is running");
 });
 
 app.get("/health", (req, res) => {
@@ -40,10 +45,13 @@ app.post("/api/todos", async (req, res) => {
     // STUDENT FIX: Add validation here!
     // Hint: Check if title is empty or undefined
     // Return 400 status with error message if invalid
+    if (!title || title.trim() === "") {
+      return res.status(400).json({ error: "Title is required" });
+    }
 
     const result = await pool.query(
       "INSERT INTO todos(title, completed) VALUES($1, $2) RETURNING *",
-      [title, completed],
+      [title.trim(), completed],
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -53,22 +61,27 @@ app.post("/api/todos", async (req, res) => {
 
 // BUG #3: Missing DELETE endpoint - but test expects it!
 // STUDENT TODO: Implement DELETE /api/todos/:id endpoint
-
 app.delete("/api/todos/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    await pool.query(`DELETE FROM todos WHERE id = $1`, [id]);
+    const result = await pool.query(
+      "DELETE FROM todos WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Todo not found" });
+    }
 
     res.status(200).json({ message: "Deleted Successfully" });
   } catch (err) {
-    res.status(500).json({ err: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // BUG #4: Missing PUT endpoint for updating todos
 // STUDENT TODO: Implement PUT /api/todos/:id endpoint
-
 app.put("/api/todos/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -92,8 +105,8 @@ app.put("/api/todos/:id", async (req, res) => {
     if (title !== undefined) {
       // Validate title if provided
       if (!title || title.trim() === "") {
-        return res.status(400).json({ 
-          error: "Title cannot be empty" 
+        return res.status(400).json({
+          error: "Title cannot be empty"
         });
       }
       updateValues.push(title.trim());
@@ -109,8 +122,8 @@ app.put("/api/todos/:id", async (req, res) => {
 
     // If no fields to update
     if (updateValues.length === 0) {
-      return res.status(400).json({ 
-        error: "No valid fields to update" 
+      return res.status(400).json({
+        error: "No valid fields to update"
       });
     }
 
@@ -128,6 +141,8 @@ app.put("/api/todos/:id", async (req, res) => {
 
 // BUG #5: Server starts even in test mode, causing port conflicts
 // STUDENT FIX: Only start server if NOT in test mode
+const port = process.env.PORT || 3000;
+
 if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => {
     console.log(`Backend running on port ${port}`);
