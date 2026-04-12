@@ -50,7 +50,7 @@ function App() {
 
   async function removeTodo(id) {
     try {
-      await fetch(`${API_URL}/api/todos/:${id}`, {
+      await fetch(`${API_URL}/api/todos/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
@@ -83,7 +83,7 @@ function App() {
             <span>{todo.title}</span>
             <small>{todo.completed ? "✅" : "⏳"}</small>
 
-            <button className="button" onClick={removeTodo(todo.id)}>
+            <button className="button" onClick={() => removeTodo(todo.id)}>
               Remove
             </button>
           </li>
