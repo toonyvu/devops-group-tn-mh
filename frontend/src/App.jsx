@@ -48,6 +48,19 @@ function App() {
     }
   };
 
+  async function removeTodo(id) {
+    try {
+      await fetch(`${API_URL}/api/todos/:${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      fetchTodos();
+    } catch (err) {
+      alert("Failed to remove todo", err.message);
+    }
+  }
+
   return (
     <div className="app-container">
       <h1>🚀 DevOps Todo App</h1>
@@ -69,6 +82,10 @@ function App() {
           <li key={todo.id} className="todo-item">
             <span>{todo.title}</span>
             <small>{todo.completed ? "✅" : "⏳"}</small>
+
+            <button className="button" onClick={removeTodo(todo.id)}>
+              Remove
+            </button>
           </li>
         ))}
       </ul>
