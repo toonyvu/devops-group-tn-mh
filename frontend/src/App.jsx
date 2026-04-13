@@ -7,6 +7,8 @@ const API_URL = "http://103.1.236.26:8105";
 function App() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
 
   const fetchTodos = async () => {
     try {
@@ -61,6 +63,44 @@ function App() {
     }
   }
 
+  async function updateTodo(id) {
+    if (!editText.trim()) return;
+
+    try {
+      await fetch(`${API_URL}/api/todos/${id}`, {
+        method: "PATCH", // or PATCH depending on backend
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editText,
+          completed: todos.find((t) => t.id === id)?.completed,
+        }),
+      });
+
+      setEditingId(null);
+      setEditText("");
+      fetchTodos();
+    } catch (err) {
+      alert("Failed to update todo", err.message);
+    }
+  }
+
+  async function toggleTodo(todo) {
+    try {
+      await fetch(`${API_URL}/api/todos/${todo.id}`, {
+        method: "PUT", // or PATCH depending on backend
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: todo.title,
+          completed: !todo.completed,
+        }),
+      });
+
+      fetchTodos();
+    } catch (err) {
+      alert("Failed to update todo", err.message);
+    }
+  }
+
   return (
     <div className="app-container">
       <h1>🚀 DevOps Todo App</h1>
@@ -76,16 +116,47 @@ function App() {
           Add
         </button>
       </div>
-
       <ul className="todo-list">
         {todos.map((todo) => (
           <li key={todo.id} className="todo-item">
-            <span>{todo.title}</span>
-            <small>{todo.completed ? "✅" : "⏳"}</small>
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={() => toggleTodo(todo)}
+            />
 
-            <button className="button" onClick={() => removeTodo(todo.id)}>
-              Remove
-            </button>
+            {editingId === todo.id ? (
+              <>
+                <input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+
+                <button onClick={() => updateTodo(todo.id)}>Save</button>
+                <button onClick={() => setEditingId(null)}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <span
+                  style={{
+                    textDecoration: todo.completed ? "line-through" : "none",
+                  }}
+                >
+                  {todo.title}
+                </span>
+
+                <button
+                  onClick={() => {
+                    setEditingId(todo.id);
+                    setEditText(todo.title);
+                  }}
+                >
+                  Edit
+                </button>
+
+                <button onClick={() => removeTodo(todo.id)}>Remove</button>
+              </>
+            )}
           </li>
         ))}
       </ul>
