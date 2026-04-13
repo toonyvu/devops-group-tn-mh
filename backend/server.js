@@ -88,7 +88,7 @@ app.delete("/api/todos/:id", async (req, res) => {
 
 app.patch("/api/todos/:id", async (req, res) => {
   try {
-    const { id } = parseInt(req.params, 10);
+    const id = parseInt(req.params, 10);
     const { title, completed } = req.body;
 
     // Validation: Check if todo exists first
