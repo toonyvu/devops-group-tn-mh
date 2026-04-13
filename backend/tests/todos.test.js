@@ -66,14 +66,14 @@ describe("Todos API", () => {
   it("PATCH /api/todos/:id updates todo", async () => {
     // First create a todo
     const createRes = await request(app)
-      .patch("/api/todos")
+      .post("/api/todos")
       .send({ title: "Original title" });
 
     const todoId = createRes.body.id;
 
     // Then update it
     const updateRes = await request(app)
-      .put(`/api/todos/${todoId}`)
+      .patch(`/api/todos/${todoId}`)
       .send({ title: "Updated title", completed: true });
 
     expect(updateRes.status).toBe(200); // Will FAIL - 404!
