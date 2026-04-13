@@ -63,7 +63,7 @@ describe("Todos API", () => {
   });
 
   // BROKEN TEST #4 - PUT endpoint not implemented!
-  it("PUT /api/todos/:id updates todo", async () => {
+  it("PATCH /api/todos/:id updates todo", async () => {
     // First create a todo
     const createRes = await request(app)
       .post("/api/todos")
