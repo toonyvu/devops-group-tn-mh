@@ -63,7 +63,7 @@ describe("Todos API", () => {
   });
 
   // BROKEN TEST #4 - PUT endpoint not implemented!
-  it("PATCH /api/todos/:id updates todo", async () => {
+  it("PUT /api/todos/:id updates todo", async () => {
     // First create a todo
     const createRes = await request(app)
       .post("/api/todos")
@@ -73,7 +73,7 @@ describe("Todos API", () => {
 
     // Then update it
     const updateRes = await request(app)
-      .patch(`/api/todos/${todoId}`)
+      .put(`/api/todos/${todoId}`)
       .send({ title: "Updated title", completed: true });
 
     expect(updateRes.status).toBe(200); // Will FAIL - 404!

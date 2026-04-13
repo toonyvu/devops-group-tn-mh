@@ -73,7 +73,7 @@ app.post("/api/todos", async (req, res) => {
 
 app.delete("/api/todos/:id", async (req, res) => {
   try {
-    const { id } = parseInt(req.params, 10);
+    const { id } = req.params;
 
     await pool.query(`DELETE FROM todos WHERE id = $1`, [id]);
 
@@ -86,9 +86,9 @@ app.delete("/api/todos/:id", async (req, res) => {
 // BUG #4: Missing PUT endpoint for updating todos
 // STUDENT TODO: Implement PUT /api/todos/:id endpoint
 
-app.patch("/api/todos/:id", async (req, res) => {
+app.put("/api/todos/:id", async (req, res) => {
   try {
-    const id = parseInt(req.params, 10);
+    const { id } = req.params;
     const { title, completed } = req.body;
 
     // Validation: Check if todo exists first
@@ -118,7 +118,7 @@ app.patch("/api/todos/:id", async (req, res) => {
     }
 
     if (completed !== undefined) {
-      updateValues.push(Boolean(completed));
+      updateValues.push(completed);
       updateQuery += `completed = $${paramCounter}, `;
       paramCounter++;
     }
@@ -136,11 +136,6 @@ app.patch("/api/todos/:id", async (req, res) => {
     updateValues.push(id);
 
     const result = await pool.query(updateQuery, updateValues);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Todo not found" });
-    }
-
     res.status(200).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
