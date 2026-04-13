@@ -66,7 +66,7 @@ describe("Todos API", () => {
   it("PATCH /api/todos/:id updates todo", async () => {
     // First create a todo
     const createRes = await request(app)
-      .post("/api/todos")
+      .patch("/api/todos")
       .send({ title: "Original title" });
 
     const todoId = createRes.body.id;
