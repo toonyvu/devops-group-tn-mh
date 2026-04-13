@@ -73,7 +73,7 @@ app.post("/api/todos", async (req, res) => {
 
 app.delete("/api/todos/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = parseInt(req.params, 10);
 
     await pool.query(`DELETE FROM todos WHERE id = $1`, [id]);
 
@@ -88,7 +88,7 @@ app.delete("/api/todos/:id", async (req, res) => {
 
 app.patch("/api/todos/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = parseInt(req.params, 10);
     const { title, completed } = req.body;
 
     // Validation: Check if todo exists first
